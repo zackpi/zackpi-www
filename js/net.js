@@ -1,11 +1,17 @@
-var N = 15;
-var K = 20;
-var G = 10;
+var Nx = 0, Ny = 0;
+var K = 15;
+var G = 7;
 var M = 50;
-var F = .02;
-var L = 50;
+var F = .01;
+var L = 40;
 var O = 50;
 var R = 5;
+
+var selected;
+var mousestart = false;
+
+var DM_LINE = 0, DM_FILL = 1;
+var dm_slider;
 
 function spring(node, other){
     // determine distance and angle between nodes
@@ -24,86 +30,158 @@ function spring(node, other){
     node.ddy += fy/M;
 }
 
-var net = new Array(N);
+var net = new Array(Ny);
 function setup(){
-    createCanvas(windowWidth-50, windowHeight-100);
+    Nx = Math.floor((windowWidth-50)/L/2);
+    Ny = Math.floor((windowHeight-250)/L);
+    createCanvas((windowWidth-50)/2, windowHeight-100);
     
-    for(var j = 0; j < N; j++){
-        net[j] = new Array(N);
-        for(var i = 0; i < N; i++){
-            net[j][i] = {x: i*L+O, y: j*L+O, dx: 0, dy: 0, ddx: 0, ddy: 0, pos: [j,i]};
+    for(var j = 0; j < Ny; j++){
+        net[j] = new Array(Nx);
+        for(var i = 0; i < Nx; i++){
+            net[j][i] = {x: i*(L-2)+O, y: j*(L-2)+O, dx: 0, dy: 0, ddx: 0, ddy: 0, pos: [j,i]};
         }
     }
+    
+    dm_slider = createSlider(0, 2, 0, 1);
 }
 
 function draw(){
-    clear();
-    fill(255);
-    
-    for(var j = 0; j < N; j++){
-        for(var i = 0; i < N; i++){
+    for(var j = 0; j < Ny; j++){
+        for(var i = 0; i < Nx; i++){
             net[j][i].ddx = 0;
             net[j][i].ddy = G/M;
             
             if(i > 0){
                 spring(net[j][i], net[j][i-1]);
             }
-            if(i < N-1){
+            if(i < Nx-1){
                 spring(net[j][i], net[j][i+1]);
             }
             if(j > 0){
                 spring(net[j][i], net[j-1][i]);
             }
-            if(j < N-1){
+            if(j < Ny-1){
                 spring(net[j][i], net[j+1][i]);
             }
+            
         }
     }
     
     net[0][0].ddx = 0;
     net[0][0].ddy = 0;
-    net[0][N-1].ddx = 0;
-    net[0][N-1].ddy = 0;
+    net[0][Math.floor(Nx/2)].ddx = 0;
+    net[0][Math.floor(Nx/2)].ddy = 0;
+    net[0][Nx-1].ddx = 0;
+    net[0][Nx-1].ddy = 0;
     
-    for(var j = 0; j < N; j++){
-        for(var i = 0; i < N; i++){
+    if(mouseIsPressed){
+        if(!mousestart){
+            var closest = [0,0];
+            var mindist = windowWidth*windowHeight;
+            for(var j = 0; j < Ny; j++){
+                for(var i = 0; i < Nx; i++){
+                    d = (mouseX-net[j][i].x)**2 + (mouseY-net[j][i].y)**2
+                    if(d < mindist){
+                        closest = [j,i];
+                        mindist = d;
+                    }
+                }
+            }
+            if(mindist < R*R){
+                selected = closest;
+            }
+            mousestart = true;
+        }else{
+            if(selected !== undefined){
+                node = net[selected[0]][selected[1]];
+                node.x = mouseX;
+                node.y = mouseY;
+                node.dx = 0;
+                node.dy = 0;
+                node.ddx = 0;
+                node.ddy = 0;
+            }else{
+                
+            }
+        }
+    }else{
+        selected = undefined;
+        mousestart = false;
+    }
+    
+    for(var j = 0; j < Ny; j++){
+        for(var i = 0; i < Nx; i++){
             net[j][i].dx *= 1-F;
             net[j][i].dy *= 1-F;
             net[j][i].dx += net[j][i].ddx;
             net[j][i].dy += net[j][i].ddy;
             net[j][i].x += net[j][i].dx;
             net[j][i].y += net[j][i].dy;
-            
-            /*
-            if(net[j][i].x < R){
-                net[j][i].x = R;
-                net[j][i].dx = 0;
-            }
-            if(net[j][i].x > windowWidth-50-R){
-                net[j][i].x = windowWidth-50-R;
-                net[j][i].dx = 0;
-            }
-            if(net[j][i].y < R){
-                net[j][i].y = R;
-                net[j][i].dy = 0;
-            }
-            if(net[j][i].y > windowHeight-100-R){
-                net[j][i].y = windowHeight-100-R;
-                net[j][i].dy = 0;
-            }
-            */
         }
     }
     
-    
-    
-    for(var j = 0; j < N; j++){
-        for(var i = 0; i < N; i++){
-            ellipse(net[j][i].x, net[j][i].y, 2*R, 2*R);
+    clear();
+    for(var j = 0; j < Ny; j++){
+        for(var i = 0; i < Nx; i++){
+            x = net[j][i].x;
+            y = net[j][i].y;
+            
+            switch(dm_slider.value()){
+            case DM_LINE:
+                stroke(127);
+                noFill();
+                if(i < Nx-1){
+                    line(x, y, net[j][i+1].x, net[j][i+1].y);
+                }
+                if(j < Ny-1){
+                    line(x, y, net[j+1][i].x, net[j+1][i].y);
+                }
+                
+                fill(255);
+                ellipse(net[j][i].x, net[j][i].y, 2*R, 2*R);
+                break;
+            
+            case DM_FILL:
+                if(i < Nx-1 && j < Ny-1){
+                    noStroke();
+                    var x0 = net[j][i].x, y0 = net[j][i].y;
+                    var x1 = net[j][i+1].x, y1 = net[j][i+1].y;
+                    var x2 = net[j+1][i+1].x, y2 = net[j+1][i+1].y;
+                    var x3 = net[j+1][i].x, y3 = net[j+1][i].y;
+                    
+                    var hval;
+                    var delx = x1-x0;
+                    if(delx == 0){
+                        hval = 100;
+                    }else{
+                        var th = Math.atan((y1-y0)/delx)
+                        hval = Math.floor(map(th, -1.57, 1.57, 0, 255));
+                        console.log(th, hval);
+                    }
+                    var sval = Math.floor(100);
+                    var lval = Math.floor(100);
+                    
+                    var c = color("hsl(" + hval + ", 70%, 50%)");
+                    fill(c);
+                    quad(x0, y0, x1, y1, x2, y2, x3, y3);
+                }
+                break;
+            
+            default: break;
+            }
         }
     }
 }
 
 function windowResized(){
     resizeCanvas(windowWidth-50, windowHeight-100);
+    Nx = Math.floor((windowWidth-50)/L/2);
+    Ny = Math.floor((windowHeight-250)/L);
+    for(var j = 0; j < Ny; j++){
+        net[j] = new Array(Nx);
+        for(var i = 0; i < Nx; i++){
+            net[j][i] = {x: i*(L-2)+O, y: j*(L-2)+O, dx: 0, dy: 0, ddx: 0, ddy: 0, pos: [j,i]};
+        }
+    }
 }
