@@ -1,12 +1,15 @@
 var Nx = 80, Ny = 60;
 var L = 0;
 var hw = 0, hh = 0;
+
 var mousestart = false;
+var rules;
 
 var gol;
 function setup(){
     createCanvas(windowWidth-30, windowHeight-90);
     L = 2*windowWidth/Nx;
+    resize();
     
     gol = new Array(Ny);
     for(var j = 0; j < Ny; j++){
@@ -16,7 +19,18 @@ function setup(){
         }
     }
         
-    resize();
+    rules = createSelect();
+    rules.option("conway");
+    rules.option("peak");
+    rules.option("sandpile");
+    rules.option("custom");
+    rules.changed(configCustomPanel);
+    
+    cm = createSelect();
+    cm.option("gray");
+    cm.option("hue");
+    cm.option("custom");
+    cm.changed(configCustomPanel);
 }
 
 function draw(){
@@ -100,4 +114,17 @@ function resize(){
 
 function windowResized(){
     resize();
+}
+
+function configCustomPanel(){
+    if(rules.value == "custom"){
+        // enable rule selection buttons
+    }else{
+        // disable rule selection buttons
+    }
+    if(cm.value == "custom"){
+        // enable color map buttons
+    }else{
+        // disable color map buttons
+    }
 }

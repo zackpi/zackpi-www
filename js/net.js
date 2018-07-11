@@ -6,11 +6,13 @@ var F = .01;
 var L = 40;
 var O = 50;
 var R = 5;
+var P = 3;
 
 var selected;
 var mousestart = false;
+var fixed = [];
 
-var DM_LINE = 0, DM_FILL = 1;
+var DM_LINE = 0, DM_FILL = 1, DM_TEXT = 2;
 var dm_slider;
 
 function spring(node, other){
@@ -42,11 +44,13 @@ function setup(){
             net[j][i] = {x: i*(L-2)+O, y: j*(L-2)+O, dx: 0, dy: 0, ddx: 0, ddy: 0, pos: [j,i]};
         }
     }
+    fixed = [net[0][0], net[0][Math.floor(Nx/2)], net[0][Nx-1]];
     
     dm_slider = createSlider(0, 2, 0, 1);
 }
 
 function draw(){
+    
     for(var j = 0; j < Ny; j++){
         for(var i = 0; i < Nx; i++){
             net[j][i].ddx = 0;
@@ -68,13 +72,6 @@ function draw(){
         }
     }
     
-    net[0][0].ddx = 0;
-    net[0][0].ddy = 0;
-    net[0][Math.floor(Nx/2)].ddx = 0;
-    net[0][Math.floor(Nx/2)].ddy = 0;
-    net[0][Nx-1].ddx = 0;
-    net[0][Nx-1].ddy = 0;
-    
     if(mouseIsPressed){
         if(!mousestart){
             var closest = [0,0];
@@ -94,6 +91,7 @@ function draw(){
             mousestart = true;
         }else{
             if(selected !== undefined){
+                cursor(MOVE);
                 node = net[selected[0]][selected[1]];
                 node.x = mouseX;
                 node.y = mouseY;
@@ -102,12 +100,46 @@ function draw(){
                 node.ddx = 0;
                 node.ddy = 0;
             }else{
-                
+                for(var j = 0; j < Ny; j++){
+                    for(var i = 0; i < Nx; i++){
+                        dely = net[j][i].y-mouseY;
+                        delx = net[j][i].x-mouseX;
+                        radius = Math.sqrt(delx*delx + dely*dely);
+                        
+                        dmy = mouseY - pmouseY;
+                        dmx = mouseX - pmouseX;
+                        theta = Math.atan2(dmy, dmx)
+                        velocity = dmx*dmx + dmy*dmy;
+                        
+                        force = Math.min(P*velocity/radius, 100);
+                        fx = force*Math.cos(theta);
+                        fy = force*Math.sin(theta);
+                        
+                        net[j][i].ddx += fx/M;
+                        net[j][i].ddy += fy/M;
+                    }
+                }
             }
         }
     }else{
+        if(selected !== undefined){
+            var node = net[selected[0]][selected[1]];
+            var ind = fixed.indexOf(node);
+            if(ind == -1){
+                fixed.push(node);
+            }else{
+                fixed.splice(ind, 1);
+            }
+        }
+        
+        cursor(HAND);
         selected = undefined;
         mousestart = false;
+    }
+    
+    for(var node in fixed){
+        fixed[node].ddx = 0;
+        fixed[node].ddy = 0;
     }
     
     for(var j = 0; j < Ny; j++){
@@ -157,7 +189,6 @@ function draw(){
                     }else{
                         var th = Math.atan((y1-y0)/delx)
                         hval = Math.floor(map(th, -1.57, 1.57, 0, 255));
-                        console.log(th, hval);
                     }
                     var sval = Math.floor(100);
                     var lval = Math.floor(100);
@@ -165,6 +196,26 @@ function draw(){
                     var c = color("hsl(" + hval + ", 70%, 50%)");
                     fill(c);
                     quad(x0, y0, x1, y1, x2, y2, x3, y3);
+                }
+                break;
+            
+            case DM_TEXT:
+                stroke(200);
+                if(i < Nx-1){
+                    line(x, y, net[j][i+1].x, net[j][i+1].y);
+                }
+                if(j < Ny-1){
+                    line(x, y, net[j+1][i].x, net[j+1][i].y);
+                }
+                if(i < Nx-1 && j < Ny-1){
+                    noStroke();
+                    var x0 = net[j][i].x, y0 = net[j][i].y;
+                    var x1 = net[j][i+1].x, y1 = net[j][i+1].y;
+                    var x2 = net[j+1][i+1].x, y2 = net[j+1][i+1].y;
+                    var x3 = net[j+1][i].x, y3 = net[j+1][i].y;
+                    
+                    fill(100);
+                    quad(x0, y0, x1, y1, x3, y3, x2, y2);
                 }
                 break;
             
@@ -184,4 +235,5 @@ function windowResized(){
             net[j][i] = {x: i*(L-2)+O, y: j*(L-2)+O, dx: 0, dy: 0, ddx: 0, ddy: 0, pos: [j,i]};
         }
     }
+    fixed = [net[0][0], net[0][Math.floor(Nx/2)], net[0][Nx-1]];
 }

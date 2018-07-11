@@ -1,4 +1,4 @@
-var jsfiles = ["net.js"];//, "net.js", "worm.js"];
+var jsfiles = ["gol.js"];//, "net.js", "worm.js"];
 function initjs(){
     // load script
     var script = document.createElement("script");
