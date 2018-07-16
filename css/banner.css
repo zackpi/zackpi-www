@@ -1,0 +1,65 @@
+#banner{
+    background: green;
+    margin: .5em;
+    margin-top: .5em;
+    padding: .5em;
+}
+
+#banner-top{
+    background: yellow;
+    display: flex;
+    justify-content: space-between;
+    height: 8em;
+}
+
+#banner-bottom{
+    background: yellow;
+    display: flex;
+    justify-content: space-around;
+}
+
+#banner-canvas{
+    margin: auto;
+}
+
+.banner-top-element{
+    background: orange;
+    border-style: inherit;
+    border-color: inherit;
+    width: -webkit-calc(33% - 1em);
+    width:    -moz-calc(33% - 1em);
+    width:         calc(33% - 1em);
+    height: -webkit-calc(100% - 1em);
+    height:    -moz-calc(100% - 1em);
+    height:         calc(100% - 1em);
+}
+
+.banner-top-element-content{
+    background: red;
+    margin: .5em;
+    width: -webkit-calc(100% - 1em);
+    width:    -moz-calc(100% - 1em);
+    width:         calc(100% - 1em);
+    height: -webkit-calc(100% - 1em);
+    height:    -moz-calc(100% - 1em);
+    height:         calc(100% - 1em);
+    
+}
+
+.banner-box{
+    border-style: inherit;
+    border-color: inherit;
+    margin: inherit;
+    padding: inherit;
+}
+
+.banner-link{
+    background: orange;
+    border-style: inherit;
+    border-color: inherit;
+    width: 12%;
+    text-align: center;
+    margin: inherit;
+    padding: inherit;
+}
+
