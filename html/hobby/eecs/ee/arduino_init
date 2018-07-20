@@ -1,0 +1,22 @@
+Finally getting started with my Arduino UNO. I got my Arduino UNO a long time ago when I was hardcore CS and before I was really interested in EECS as a whole. I tested it out a couple times, but I was never really enthusiastic about it. I only recently realized that the Arduino didn't need to be the center of the project, and could instead be used as a supplemental tool to the development process. Things like testing parts before integrating them in larger projects, and for programming devices that I don't have a specific programmer for. It's also useful for general-purpose tinkering and prototyping when an idea strikes.
+
+In order to verify that my Arduino works and I can program it, I'm going to do the "Hello World" of microcontroller and embedded design, which is the "blinky" program; just get an LED to flash. This is often very simple because most modern microcontroller kits and Arduino look-alikes have a built-in LED or two that you can play with without even wiring anything up. On the Arduino, this LED is located on Pin13, so a "sketch" like this suffices:
+
+[[code]]
+void setup() {
+    pinMode(LED_BUILTIN, OUTPUT);  // LED_BUILTIN == 13
+}
+
+void loop() {
+    digitalWrite(LED_BUILTIN, HIGH);
+    delay(300);
+
+    digitalWrite(LED_BUILTIN, LOW);
+    delay(700);
+}
+[[/code]]
+
+setup() is the function called by the Arduino at the beginning of user code, so it runs one time. This is a good place to define the function of pins, and indeed we set Pin13 up as an output. Then the Arduino calls loop() repeatedly, so that's where we have to turn Pin13 on and off (with some delay) if we want it to blink at us.
+
+Cool, so it works! Okay, now I can move on to a more interesting test :)
+
