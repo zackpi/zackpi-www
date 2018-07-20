@@ -1,0 +1,32 @@
+Finally getting started with my Arduino UNO. I got my Arduino UNO a long time ago when I was hardcore CS and before I was really interested in EECS as a whole. I tested it out a couple times, but I was never really enthusiastic about it. I only recently realized that the Arduino didn't need to be the center of the project, and could instead be used as a supplemental tool to the development process. Things like testing parts before integrating them in larger projects, and for programming devices that I don't have a specific programmer for. It's also useful for general-purpose tinkering and prototyping when an idea strikes.
+
+In order to verify that my Arduino works and I can program it, I'm going to do the "Hello World" of microcontroller and embedded design, which is the "blinky" program; just get an LED to flash. This is often very simple because most modern microcontroller kits and Arduino look-alikes have a built-in LED or two that you can play with without even wiring anything up. On the Arduino, this LED is located on Pin13, so a "sketch" like this suffices:
+
+[[code]]
+
+[[/code]]
+
+
+##################
+
+Part of my larger "build a personal computer" project is that I need a display of some kind. I think it would be kind of foolish to start out with a tft lcd with hundreds of thousands of pixels and full RGB color and all that, when really all I need to start out is a couple lines of text to get some debug info. To that end, I'll be using a 16x2 character display LCD. This LCD is "serial enabled", meaning it has a PIC chip attached to it that converts the serial input to the board to parallel inputs to the LCD chips. Ideally, I would bypass the serial functionality and use parallel because in my opinion, parallel is just easier for interfacing with devices that are closely tied to the processor (although it does increase the number of wires/traces, etc). So that's what I'll be trying to do today.
+
+The LCD board is the LCD-09393 by SparkFun Electronics. After some research, it seems like the boards are discontinued, or at least I couldn't find any available. I was able to find a datasheet for the device, but it was clear that they never intended for anyone to actually use anything but the serial because they don't even mention the 10 pins along the top of the board that can be used for 4-bit parallel communication. In order to actually get some information about the board, I had to look at the LCD driver chip they were using, and of course it was the HD44780, one of if not the most prevalent LCD driver used in LCDs across the market. Anyway, that helped me find the following datasheet, which I will use for the rest of this process:
+
+https://www.sparkfun.com/datasheets/LCD/HD44780.pdf
+
+I love datasheets like this one. They tell you everything there is to know about the device so you have no trouble at all working with it. The worst is when you order a part or you're just browsing online and you look at the datasheet and quickly reach the end of it before finding one useful piece of information about how to actually use the device.
+Combining this information with the pinout of the LCD-09393 board, which I found from the SparkFun website along with the serial guide, I should be able to get this working. Here's the pinout, with relevant pins emphasized:
+
+1  GND  - ground
+2  VDD  - 5v power
+3  RS   - register select (0: instruction, 1: data)
+4  R/#W - selects read or write (read active high, write low)
+5  E    - enable data read/write
+6  DB4  - data[0] or data[4]
+7  DB5  - data[1] or data[5]
+8  DB6  - data[2] or data[6]
+9  DB7  - data[3] or data[7]
+10 BL+  - backlight power
+
+
