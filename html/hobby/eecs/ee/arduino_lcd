@@ -4,7 +4,126 @@ The LCD board is the LCD-09393 by SparkFun Electronics. After some research, it 
 
     https://www.sparkfun.com/datasheets/LCD/HD44780.pdf
 
+I love datasheets like this one. They tell you everything there is to know about the device so you have no trouble at all working with it. The worst is when you order a part or you're just browsing online and you look at the datasheet and quickly reach the end of it before finding one useful piece of information about how to actually use the devPart of my larger "build a personal computer" project is that I need a display of some kind. I think it would be kind of foolish to start out with a tft lcd with hundreds of thousands of pixels and full RGB color and all that, when really all I need to start out is a couple lines of text to get some debug info. To that end, I'll be using a 16x2 character display LCD. This LCD is "serial enabled", meaning it has a PIC chip attached to it that converts the serial input to the board to parallel inputs to the LCD chips. Ideally, I would bypass the serial functionality and use parallel because in my opinion, parallel is just easier for interfacing with devices that are closely tied to the processor (although it does increase the number of wires/traces, etc). So that's what I'll be trying to do today.
+
+The LCD board is the LCD-09393 by SparkFun Electronics. After some research, it seems like the boards are discontinued, or at least I couldn't find any available. I was able to find a datasheet for the device, but it was clear that they never intended for anyone to actually use anything but the serial because they don't even mention the 10 pins along the top of the board that can be used for 4-bit parallel communication. In order to actually get some information about the board, I had to look at the LCD driver chip they were using, and of course it was the HD44780, one of if not the most prevalent LCD driver used in LCDs across the market. Anyway, that helped me find the following datasheet, which I will use for the rest of this process:
+
+    https://www.sparkfun.com/datasheets/LCD/HD44780.pdf
+
 I love datasheets like this one. They tell you everything there is to know about the device so you have no trouble at all working with it. The worst is when you order a part or you're just browsing online and you look at the datasheet and quickly reach the end of it before finding one useful piece of information about how to actually use the device.
+Combining this information with the pinout of the LCD-09393 board, which I found from the SparkFun website along with the serial guide, I should be able to get this working. Here's the pinout, with relevant pins emphasized:
+
+    1  GND  - ground
+    2  VDD  - 5v power
+    3  RS   - register select (0: instruction, 1: data)
+    4  R/#W - selects read or write (read active high, write low)
+    5  E    - enable data read/write
+    6  DB4  - data[0] or data[4]
+    7  DB5  - data[1] or data[5]
+    8  DB6  - data[2] or data[6]
+    9  DB7  - data[3] or data[7]
+    10 BL+  - backlight power
+
+Just to get my bearings, I start out with a simple test: power the board and see what happens. So I put jumpers from the 5v and GND pins on the Arduino to VDD and GND on the board and plugged in the Arduino. the result was a quick blink of white light from the back of the LCD then it went away. Nothing blew up so I'm probably doing something right.
+
+Now I wanted to test the backlight. I knew BL+ was analog because you can adjust it with a potentiometer on the back of the LCD module. So I wired up the 3.3v supply from the Arduino to BL+ along with the previous connections and sure enough I saw an array of 16x2 dot matrix blocks on the screen. It's always a success when you give a board you don't have much information on power and it doesn't blow up, haha! 
+
+Anyway, I also saw a couple characters show up on the screen, probably due to some noise on the floating data lines. Now I have to try to send my own characters to the screen. The 4-bit protocol is the only one available to me because only DB[4:7] have been broken out to pins. The HD44780U ignores the lower nibble of DB in 4-bit mode, so that's great.
+
+So let's take a look at how to send an instruction or data to the HD44780U and subsequently the LCD. Let's take the example of sending "Clear Display". According to the data sheet, I have to use the following pin configuration:
+
+RS=0    ; because we are sending an instruction
+R/#W=0  ; because we are writing
+DB=0x01 ; corresponds to the "Clear Display" instruction
+
+The way 4-bit operation works is clear from this timing diagram of an instruction write:
+
+RS and R/#W are low for the entire operation. Pull E, the enable line, high to begin the write. Send the high nibble of the instruction DB[4:7]. For "Clear Display", this is 0x0. Lower E to latch the bits so that when we send the low nibble DB[0:3], it doesn't affect what has already been sent. Raise E again and send DB[0:3], which in "Clear Display" is 0x1. Finally latch E again.
+
+Here's all that in Arduino code:
+
+    // set up the register select and read/write pins
+    digitalWrite(RS_pin, LOW);
+    digitalWrite(RW_pin, LOW);
+
+    // write the first nibble (0x0)
+    digitalWrite(E_pin, HIGH);
+    digitalWrite(DB4, LOW);
+    digitalWrite(DB5, LOW);
+    digitalWrite(DB6, LOW);
+    digitalWrite(DB7, LOW);
+    digitalWrite(E_pin, LOW);
+
+    // write the second nibble (0x1)
+    digitalWrite(E_pin, HIGH);
+    digitalWrite(DB4, LOW);
+    digitalWrite(DB5, LOW);
+    digitalWrite(DB6, LOW);
+    digitalWrite(DB7, HIGH);
+    digitalWrite(E_pin, LOW);
+
+That could get unweildy very fast so I wrote a couple helper functions lcdWriteNibb(rs, bits4) and lcdWriteByte(rs, bits8) that encapsulate the code above. Here's how I can call "Clear Display" now:
+
+    // this just unpacks to the code above
+    lcdWriteByte(rs, 0x01)
+
+Simple, right?? Well, unfortunately there's a little kink in the plan called the Busy Flag (BF). When the Busy Flag is set in the HD44780U, it is currently performing an internal operation and sending it another command will make it take much longer to perform both queued commands. So in order to avoid such latencies, it's better to wait for the chip to finish what it's doing (until BF=0) before sending a new command. To that end, I wrote a function lcdBusy() that simply reads the Busy Flag of the HD44780U. It's possible that multiple subsequent reads will return true (meaning busy), so I have to make sure never to send commands unless this function has been called and returned false.
+
+To actually start using the LCD, I need to initialize the HD44780U by sending it several setup instructions. The initialization sequence is outlined in this figure from the HD44780U datasheet:
+
+So I wrote a function lcdInit(), that sends these instructions and waits the correct amount of time between them. This should only be called once and must be called before attempting to interface with the LCD. Here's what it does:
+
+  // Note: I have INSTR defined as LOW and 
+  // DATA defined as HIGH for the RS pin configuration
+
+  // intercept 8-bit operation during startup
+  delay(50);
+  lcdWriteNibb(0x3, INSTR);     
+  delay(10);
+  lcdWriteNibb(0x3, INSTR);
+  delay(1);
+  lcdWriteNibb(0x3, INSTR);
+  
+  // enable 4-bit operation
+  lcdWriteNibb(0x2, INSTR);
+  
+  // Function Set: 0 0 1 DL N F X X    (X = dont care)
+  // DL=0 for 4-bit op, N=1 for 2 lines, F=0 for 5x8 font
+  while(lcdBusy());
+  lcdWriteByte(0x28, INSTR);
+  
+  // Display On/Off: 0 0 0 0 1 D C B
+  // D=1 for display on, C=1 for cursor on, B=1 for blinking cursor char
+  while(lcdBusy());
+  lcdWriteByte(0x0F, INSTR);
+  
+  // Display Clear: 0 0 0 0 0 0 0 1
+  while(lcdBusy());
+  lcdWriteByte(0x01, INSTR);
+  
+  
+  // Entry Mode Set: 0 0 0 0 0 1 I/D S
+  // I/D = 1 for inc DDRAM addr, S=0 for no screen-shift
+  while(lcdBusy());
+  lcdWriteByte(0x06, INSTR);
+
+The last step is to make a print function that takes a string and prints it one character at a time to the LCD. 
+
+  void lcdWriteString(char str[], int len){
+    for(int i = 0; i < len; i++){
+      lcdWriteByte(str[i], DATA);
+    }
+  }
+
+This works perfectly for the ASCII charset because if I compare them, all the alphanumeric characters and standard punctuation match up between the ASCII and HD44780U charsets. But interestingly, there are extra characters in the HD44780U character generator ROM, which I can print using a character array of bytes outside the alphanumeric range, rather than a string literal. Take this code snippet for example:
+
+// prints "zackpi"
+lcdWriteString("zackpi", 6)     
+
+// prints "π¿ε§"
+lcdWriteString({0x93, 0xBF, 0x9E, 0xA7}, 4)
+
+So now that I set all that up, I can finally run a "Hello World" test. Huzzah!ice.
 Combining this information with the pinout of the LCD-09393 board, which I found from the SparkFun website along with the serial guide, I should be able to get this working. Here's the pinout, with relevant pins emphasized:
 
     1  GND  - ground
