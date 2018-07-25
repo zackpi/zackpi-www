@@ -1,28 +1,59 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <meta charset="utf-8">
-    <link href="../css/dark.css" rel="stylesheet" type="text/css">
-    <title>zackpi::about</title>
-</head>
-<body>
-
-    <p>This is the about main page.</p>
-    <ul>
-        <li style="display: inline;"><a href="../index.html">index</a></li>
-        <li style="display: inline;"><a href="#">about</a></li>
-        <li style="display: inline;"><a href="blog.html">blog</a></li>
-        <li style="display: inline;"><a href="hobby.html">hobby</a></li>
-        <li style="display: inline;"><a href="work.html">work</a></li>
-        <li style="display: inline;"><a href="links.html">links</a></li>
-        <li style="display: inline;"><a href="random.html">random</a></li>
-    </ul>
-    <p>Hi! I'm Zachary Pitcher. This is my about main page, where you can read about my life at various stages. I don't think I'm very good at talking about myself, but hopefully you get something out of it.</p>
-    <ul>
-        <li><a href="html/about/child.html">child</a></li>
-        <li><a href="html/about/teen.html">teen</a></li>
-        <li><a href="html/about/now.html">now</a></li>
-    </ul>
-</body>
+    <head>
+        <meta charset="utf-8">
+        <title>Zachary Pitcher</title>
+        <link href="style.css" rel="stylesheet" type="text/css">
+        <script src="script.js" type="application/javascript"></script>
+    </head>
+    
+    <body>
+        <div id="landing-wrapper">
+            <img id="landing-image" src="img/landingtemp.jpg" style="width: 100%; height: 900px">
+        </div>
+        
+        <div id="timeline-wrapper">
+            <div id="timeline-left">
+            
+                <div class="timeline-card" onmouseover="expand(this)">
+                    <div class="timeline-thumbnail">
+                        <img src="img/thumbnailtemp.jpg" style="width: 100%; height: 100%;">
+                        <p>This is a test. This is a test. This is a test. This is a test.</p>
+                    </div>
+                    <img class="timeline-pointer" src="img/pointertemp.jpg">
+                </div>
+                
+                <div class="timeline-card" onmouseover="expand(this)">
+                    <div class="timeline-thumbnail">
+                        <img src="img/thumbnailtemp.jpg" style="width: 100%; height: 100%;">
+                        <p>This is a left. This is a left. This is a left. This is a left.</p>
+                    </div>
+                    <img class="timeline-pointer" src="img/pointertemp.jpg">
+                </div>
+            
+            </div>
+            
+            <div id="timeline-spine"></div>
+            
+            <div id="timeline-right">
+            
+                <div class="timeline-card" onmouseover="expand(this)">
+                    <div class="timeline-thumbnail">
+                        <img src="img/thumbnailtemp.jpg" style="width: 100%; height: 100%;">
+                        <p>This is a test. This is a test. This is a test. This is a test.</p>
+                    </div>
+                    <img class="timeline-pointer" src="img/pointertemp.jpg">
+                </div>
+                
+                <div class="timeline-card" onmouseover="expand(this)">
+                    <div class="timeline-thumbnail">
+                        <img src="img/thumbnailtemp.jpg" style="width: 100%; height: 100%;">
+                        <p>This is a left. This is a left. This is a left. This is a left.</p>
+                    </div>
+                    <img class="timeline-pointer" src="img/pointertemp.jpg">
+                </div>
+            
+            </div>
+        </div>
+    </body>
 </html>
-
